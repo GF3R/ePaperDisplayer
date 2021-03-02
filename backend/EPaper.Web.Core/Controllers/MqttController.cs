@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
@@ -7,10 +6,17 @@ using MQTTnet.Client;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Options;
 using MQTTnet.Client.Publishing;
-using System.Drawing;
+using SixLabors.ImageSharp.Formats.Bmp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using ImageMagick;
+using SixLabors.ImageSharp;
+
 
 namespace EPaper.Web.Core.Controllers
 {
@@ -27,7 +33,7 @@ namespace EPaper.Web.Core.Controllers
             var factory = new MqttFactory();
             this.mqttClient = factory.CreateMqttClient();
         }
-        
+
         private async Task<MqttClientAuthenticateResult> Connect()
         {
             var options = new MqttClientOptionsBuilder()
@@ -39,44 +45,24 @@ namespace EPaper.Web.Core.Controllers
         }
 
         [HttpPost]
-        public async Task<Task<MqttClientPublishResult>> FromImage(IFormFile image)
+        public async Task<string> FromUrl(string imageUrl, int resX, int resY)
         {
-                var converter = new ImageConverter();
-                return this.Publish((byte[]) converter.ConvertTo(image, typeof(byte[])));
+            var bitmap = UrlToBitmapWithResolutions(imageUrl, resX, resY);
+            await this.Publish(bitmap);
+            return ByteArrayToString(bitmap);
         }
 
         [HttpPost]
-        public void FromUrl(string imageUrl)
+        public async Task<MqttClientPublishResult> Clear()
         {
-            try
-            {
-                using (WebClient webClient = new WebClient())
-                {
-                    byte[] data = webClient.DownloadData(imageUrl);
-                    Publish(bytes: data);
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
+            return await Publish(new byte[0]);
         }
 
-        [HttpPost]
-        public void Clear()
+        public static string ByteArrayToString(byte[] ba)
         {
-            Publish(new byte[0]);
+            return BitConverter.ToString(ba);
         }
 
-        private async Task<MqttClientPublishResult> Publish(byte[] bytes)
-        {
-            await this.Connect();
-            return await mqttClient.PublishAsync(new MqttApplicationMessage()
-            {
-                Topic = "epaper/EPAPER-001/image",
-                Payload = bytes
-            });
-        }
 
         [HttpGet]
         public async Task<MqttClientPublishResult> Test()
@@ -181,6 +167,37 @@ namespace EPaper.Web.Core.Controllers
                 }
 
             }, cancellationToken: CancellationToken.None);
+        }
+
+
+        private async Task<MqttClientPublishResult> Publish(byte[] bytes)
+        {
+            await this.Connect();
+            return await mqttClient.PublishAsync(new MqttApplicationMessage()
+            {
+                Topic = "epaper/EPAPER-001/image",
+                Payload = bytes
+            });
+        }
+
+        private static byte[] UrlToBitmapWithResolutions(string url, int width, int height)
+        {
+            using var webClient = new WebClient();
+            var data = webClient.DownloadData(url);
+
+            using var ms = new MemoryStream(data);
+            using var stream = new MemoryStream();
+           
+            using (MagickImage image = new MagickImage(data))
+            {
+                image.Format = image.Format; // Get or Set the format of the image.
+                image.Resize(width, height); // fit the image into the requested width and height. 
+                image.ColorSpace = ColorSpace.Gray;
+                image.Quality = 5; // This is the Compression level.
+                image.Write(stream, MagickFormat.Bmp);
+            }
+
+            return stream.ToArray().Skip(40 + 14 + 4).ToArray();
         }
     }
 }
