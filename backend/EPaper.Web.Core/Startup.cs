@@ -19,6 +19,7 @@ namespace EPaper.Web.Core
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -32,6 +33,8 @@ namespace EPaper.Web.Core
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            app.UseCors(builder => builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+
 
             app.UseAuthorization();
 

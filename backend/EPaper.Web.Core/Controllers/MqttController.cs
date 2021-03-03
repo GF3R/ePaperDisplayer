@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
@@ -14,6 +16,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using EPaper.Web.Core.Models;
 using ImageMagick;
 using SixLabors.ImageSharp;
 
@@ -34,22 +37,27 @@ namespace EPaper.Web.Core.Controllers
             this.mqttClient = factory.CreateMqttClient();
         }
 
-        private async Task<MqttClientAuthenticateResult> Connect()
-        {
-            var options = new MqttClientOptionsBuilder()
-                .WithClientId("Client1")
-                .WithTcpServer("farmer.cloudmqtt.com", 11140)
-                .WithCredentials("prkyqurh", "Prc1iqpPQdYE")
-                .Build();
-            return await mqttClient.ConnectAsync(options, CancellationToken.None);
-        }
+    
 
         [HttpPost]
-        public async Task<string> FromUrl(string imageUrl, int resX, int resY)
+        public async Task<IActionResult> FromUrl(string imageUrl, int width, int height)
         {
-            var bitmap = UrlToBitmapWithResolutions(imageUrl, resX, resY);
-            await this.Publish(bitmap);
-            return ByteArrayToString(bitmap);
+            try
+            {
+                var bitmap = UrlToBitmapWithResolutions(imageUrl, width, height);
+                await this.Publish(bitmap);
+                return Ok(new ImageWrapper()
+                {
+                    Bytes = ByteArrayToString(bitmap),
+                    Base64 = ByteArrayBmpToString(bitmap),
+                    NumberOfBytes = bitmap.Length
+
+                });
+            }
+            catch(Exception e)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost]
@@ -168,7 +176,15 @@ namespace EPaper.Web.Core.Controllers
 
             }, cancellationToken: CancellationToken.None);
         }
-
+        private async Task<MqttClientAuthenticateResult> Connect()
+        {
+            var options = new MqttClientOptionsBuilder()
+                .WithClientId("Client1")
+                .WithTcpServer("farmer.cloudmqtt.com", 11140)
+                .WithCredentials("prkyqurh", "Prc1iqpPQdYE")
+                .Build();
+            return await mqttClient.ConnectAsync(options, CancellationToken.None);
+        }
 
         private async Task<MqttClientPublishResult> Publish(byte[] bytes)
         {
@@ -176,7 +192,7 @@ namespace EPaper.Web.Core.Controllers
             return await mqttClient.PublishAsync(new MqttApplicationMessage()
             {
                 Topic = "epaper/EPAPER-001/image",
-                Payload = bytes
+                Payload = bytes,
             });
         }
 
@@ -190,14 +206,25 @@ namespace EPaper.Web.Core.Controllers
            
             using (MagickImage image = new MagickImage(data))
             {
-                image.Format = image.Format; // Get or Set the format of the image.
-                image.Resize(width, height); // fit the image into the requested width and height. 
                 image.ColorSpace = ColorSpace.Gray;
-                image.Quality = 5; // This is the Compression level.
+                image.Resize(width, height); // fit the image into the requested width and height. 
                 image.Write(stream, MagickFormat.Bmp);
             }
 
-            return stream.ToArray().Skip(40 + 14 + 4).ToArray();
+            using var bitmap = new Bitmap(stream);
+            using var newStream = new MemoryStream();
+            bitmap.SetResolution(0.2f, 0.1f);
+            bitmap.Save(newStream, ImageFormat.Bmp);
+            return newStream.ToArray();
+        }
+
+        private static string ByteArrayBmpToString(byte[] bytes)
+        {
+            using (MagickImage image = new MagickImage(bytes))
+            {
+                image.Format = image.Format;
+                return image.ToBase64();
+            }
         }
     }
 }

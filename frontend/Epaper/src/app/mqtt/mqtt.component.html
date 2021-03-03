@@ -1,0 +1,8 @@
+<input type="text" [(ngModel)]="imageUrl" />
+<input type="number" [(ngModel)]="width" />
+<input type="number" [(ngModel)]="height" />
+
+<button (click)="getNewImage()">Submit</button>
+<img [src]="'data:image/png;base64,' + imageWrapper.base64" />
+<textarea disabled="true">{{ imageWrapper.bytes }}</textarea>
+<h1>Number of bytes: {{ imageWrapper.numberOfBytes }}</h1>
