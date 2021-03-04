@@ -3,7 +3,6 @@
 #include <GxGDEW042T2/GxGDEW042T2.h> // 4.2" b/w
 #include <GxIO/GxIO_SPI/GxIO_SPI.h>
 #include <GxIO/GxIO.h>
-#include "IMG_0001.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 
@@ -35,7 +34,7 @@ void setup()
   setupWifi();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
-  client.setBufferSize(100000);
+  client.setBufferSize(1000000);
   strcpy(fullsubtopic, TOPIC);
   strcat(fullsubtopic, DEVICEID);
   strcat(fullsubtopic, SUB);
@@ -94,7 +93,7 @@ void setupWifi()
 
 ////////////////////////////MQTT//////////////////////////////////
 
-void callback(char* topic, byte* message, unsigned int length)
+void callback(char *topic, byte *message, unsigned int length)
 {
   Serial.println("Recieved message with length:");
   Serial.println(length);
@@ -103,11 +102,9 @@ void callback(char* topic, byte* message, unsigned int length)
     clearScreen();
     return;
   }
-  //displayBitmap(message);
-  //delay(10000);
-  //drawImage(message);
-  delay(5000);
-  drawImageFullScreen(message, length);
+
+  displayBitmap(message);
+  display.update();
 }
 
 void publish(char *message)
@@ -142,40 +139,11 @@ static const uint16_t input_buffer_pixels = 640; // may affect performance
 
 static const uint16_t max_palette_pixels = 256; // for depth <= 8
 
-uint8_t input_buffer[3 * input_buffer_pixels]; // up to depth 24
-uint8_t mono_palette_buffer[max_palette_pixels / 8]; // palette buffer for depth <= 8 b/w
+uint8_t input_buffer[3 * input_buffer_pixels];        // up to depth 24
+uint8_t mono_palette_buffer[max_palette_pixels / 8];  // palette buffer for depth <= 8 b/w
 uint8_t color_palette_buffer[max_palette_pixels / 8]; // palette buffer for depth <= 8 c/w
 
-uint32_t read(byte* byteArray, uint8_t* buffer, int32_t bytes)
-{
-  int32_t remain = bytes;
-  uint32_t start = millis();
-  while (remain > 0)
-  {
-    ++byteArray;
-    int16_t v = byteArray[0];
-    *buffer++ = uint8_t(v);
-    remain--;
-  }
-  return bytes - remain;
-}
-
-uint16_t read16(uint8_t* bytes)
-{ 
-  // BMP data is stored little-endian, same as Arduino.
-  return (uint16_t)bytes[0];
-}
-
-uint32_t read32(uint8_t* bytes)
-{ 
-  // BMP data is stored little-endian, same as Arduino.
-  uint32_t data = (uint32_t)bytes[0];
-  (uint32_t)bytes++;
-  return data;
-
-}
-
-uint32_t skip(byte* byteArray, int32_t bytes)
+uint32_t skip(byte *byteArray, int32_t bytes)
 {
   int32_t remain = bytes;
   uint32_t start = millis();
@@ -187,39 +155,88 @@ uint32_t skip(byte* byteArray, int32_t bytes)
   return bytes - remain;
 }
 
-void displayBitmap(byte* bytes)
+void displayBitmap(byte *bytes)
 {
-   bool with_color = false;
+  bool with_color = false;
   int16_t x = display.width() / 2;
   int16_t y = display.height() / 2;
   bool valid = false; // valid format to be handled
-  bool flip = true; // bitmap is stored bottom-to-top
+  bool flip = true;   // bitmap is stored bottom-to-top
   uint32_t startTime = millis();
-  
+  read16(bytes);
+  bytes++;
+  bytes++;
   uint32_t fileSize = read32(bytes);
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
   uint32_t creatorBytes = read32(bytes);
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
   uint32_t imageOffset = read32(bytes); // Start of image data
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
   uint32_t headerSize = read32(bytes);
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
   uint32_t width = read32(bytes);
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
   uint32_t height = read32(bytes);
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
   uint16_t planes = read16(bytes);
+  bytes++;
+  bytes++;
+
   uint16_t depth = read16(bytes); // bits per pixel
+  bytes++;
+  bytes++;
+
   uint32_t format = read32(bytes);
-  uint32_t bytes_read = 7 * 4 + 3 * 2;                   // read so far
-   Serial.print("File size: ");
-    Serial.println(fileSize);
-    Serial.print("Image Offset: ");
-    Serial.println(imageOffset);
-    Serial.print("Header size: ");
-    Serial.println(headerSize);
-    Serial.print("Bit Depth: ");
-    Serial.println(depth);
-    Serial.print("Image size: ");
-    Serial.print(width);
-    Serial.print('x');
-    Serial.println(height);
-  if ((planes == 1) && ((format == 0) || (format == 3))) // uncompressed is handled, 565 also
+  bytes++;
+  bytes++;
+  bytes++;
+  bytes++;
+
+  uint32_t bytes_read = 7 * 4 + 3 * 2; // read so far
+  Serial.print("File size: ");
+  Serial.println(fileSize);
+  Serial.print("Image Offset: ");
+  Serial.println(imageOffset);
+  Serial.print("Header size: ");
+  Serial.println(headerSize);
+  Serial.print("Bit Depth: ");
+  Serial.println(depth);
+  Serial.print("Image size: ");
+  Serial.print(width);
+  Serial.print('x');
+  Serial.println(height);
+  Serial.print("format");
+  Serial.println(format);
+  Serial.print("planes");
+  Serial.println(planes);
+  
+  if ((planes == 1) && ((format == 0) || (format == 3)) || true) // uncompressed is handled, 565 also
   {
+    Serial.println("Working");
     Serial.print("File size: ");
     Serial.println(fileSize);
     Serial.print("Image Offset: ");
@@ -258,15 +275,22 @@ void displayBitmap(byte* bytes)
     {
       if (depth < 8)
         bitmask >>= depth;
-      bytes_read += skip(bytes, imageOffset - (4 << depth) - bytes_read); // 54 for regular, diff for colorsimportant
+
+      int remain = imageOffset - (4 << depth) - bytes_read;
+      while (remain > 0)
+      {
+        bytes++;
+        bytes_read++;
+        remain--;
+      }
       for (uint16_t pn = 0; pn < (1 << depth); pn++)
       {
         ++bytes;
-        blue = bytes[0];
+        blue = *bytes;
         ++bytes;
-        green = bytes[0];
+        green = *bytes;
         ++bytes;
-        red = bytes[0];
+        red = *bytes;
         ++bytes;
         bytes_read += 4;
         whitish = with_color ? ((red > 0x80) && (green > 0x80) && (blue > 0x80)) : ((red + green + blue) > 3 * 0x80); // whitish
@@ -284,7 +308,13 @@ void displayBitmap(byte* bytes)
     display.fillScreen(GxEPD_WHITE);
     uint32_t rowPosition = flip ? imageOffset + (height - h) * rowSize : imageOffset;
     //Serial.print("skip "); Serial.println(rowPosition - bytes_read);
-    bytes_read += skip(bytes, rowPosition - bytes_read);
+    int remain = rowPosition - bytes_read;
+    while (remain > 0)
+    {
+      bytes++;
+      bytes_read++;
+      remain--;
+    }
     for (uint16_t row = 0; row < h; row++, rowPosition += rowSize) // for each line
     {
       delay(1); // yield() to avoid WDT
@@ -302,63 +332,79 @@ void displayBitmap(byte* bytes)
         if (in_idx >= in_bytes) // ok, exact match for 24bit also (size IS multiple of 3)
         {
           uint32_t get = in_remain > sizeof(input_buffer) ? sizeof(input_buffer) : in_remain;
-          uint32_t got = read(bytes, input_buffer, get);
+          uint8_t* buffer = input_buffer;
+          remain = get;
+          while ((remain > 0))
+          {
+            bytes++;
+            int16_t v = *bytes;
+            *buffer++ = uint8_t(v);
+            remain--;
+          }
+          uint32_t got = get - remain;
           while (got < get)
           {
-            //Serial.print("got "); Serial.print(got); Serial.print(" < "); Serial.print(get); Serial.print(" @ "); Serial.println(bytes_read);
-            uint32_t gotmore = read(bytes, input_buffer + got, get - got);
+             buffer = input_buffer + got;
+            remain = get - got;
+            while ((remain > 0))
+            {
+              bytes++;
+              int16_t v = *bytes;
+              *buffer++ = uint8_t(v);
+              remain--;
+            }
+            uint32_t gotmore = get - got - remain;
             got += gotmore;
           }
           in_bytes = got;
           in_remain -= got;
           bytes_read += got;
         }
-      
         switch (depth)
         {
-        case 24:
-          blue = input_buffer[in_idx++];
-          green = input_buffer[in_idx++];
-          red = input_buffer[in_idx++];
-          whitish = with_color ? ((red > 0x80) && (green > 0x80) && (blue > 0x80)) : ((red + green + blue) > 3 * 0x80); // whitish
-          colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));                                                  // reddish or yellowish?
-          break;
-        case 16:
-        {
-          uint8_t lsb = input_buffer[in_idx++];
-          uint8_t msb = input_buffer[in_idx++];
-          if (format == 0) // 555
-          {
-            blue = (lsb & 0x1F) << 3;
-            green = ((msb & 0x03) << 6) | ((lsb & 0xE0) >> 2);
-            red = (msb & 0x7C) << 1;
-          }
-          else // 565
-          {
-            blue = (lsb & 0x1F) << 3;
-            green = ((msb & 0x07) << 5) | ((lsb & 0xE0) >> 3);
-            red = (msb & 0xF8);
-          }
-          whitish = with_color ? ((red > 0x80) && (green > 0x80) && (blue > 0x80)) : ((red + green + blue) > 3 * 0x80); // whitish
-          colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));                                                  // reddish or yellowish?
-        }
-        break;
-        case 1:
-        case 4:
-        case 8:
-        {
-          if (0 == in_bits)
-          {
-            in_byte = input_buffer[in_idx++];
-            in_bits = 8;
-          }
-          uint16_t pn = (in_byte >> bitshift) & bitmask;
-          whitish = mono_palette_buffer[pn / 8] & (0x1 << pn % 8);
-          colored = color_palette_buffer[pn / 8] & (0x1 << pn % 8);
-          in_byte <<= depth;
-          in_bits -= depth;
-        }
-        break;
+          case 24:
+            blue = input_buffer[in_idx++];
+            green = input_buffer[in_idx++];
+            red = input_buffer[in_idx++];
+            whitish = with_color ? ((red > 0x80) && (green > 0x80) && (blue > 0x80)) : ((red + green + blue) > 3 * 0x80); // whitish
+            colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));                                                  // reddish or yellowish?
+            break;
+          case 16:
+            {
+              uint8_t lsb = input_buffer[in_idx++];
+              uint8_t msb = input_buffer[in_idx++];
+              if (format == 0) // 555
+              {
+                blue = (lsb & 0x1F) << 3;
+                green = ((msb & 0x03) << 6) | ((lsb & 0xE0) >> 2);
+                red = (msb & 0x7C) << 1;
+              }
+              else // 565
+              {
+                blue = (lsb & 0x1F) << 3;
+                green = ((msb & 0x07) << 5) | ((lsb & 0xE0) >> 3);
+                red = (msb & 0xF8);
+              }
+              whitish = with_color ? ((red > 0x80) && (green > 0x80) && (blue > 0x80)) : ((red + green + blue) > 3 * 0x80); // whitish
+              colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));                                                  // reddish or yellowish?
+            }
+            break;
+          case 1:
+          case 4:
+          case 8:
+            {
+              if (0 == in_bits)
+              {
+                in_byte = input_buffer[in_idx++];
+                in_bits = 8;
+              }
+              uint16_t pn = (in_byte >> bitshift) & bitmask;
+              whitish = mono_palette_buffer[pn / 8] & (0x1 << pn % 8);
+              colored = color_palette_buffer[pn / 8] & (0x1 << pn % 8);
+              in_byte <<= depth;
+              in_bits -= depth;
+            }
+            break;
         }
         if (whitish)
         {
@@ -370,9 +416,41 @@ void displayBitmap(byte* bytes)
         }
         uint16_t yrow = y + (flip ? h - row - 1 : row);
         display.drawPixel(x + col, yrow, color);
+        /*
+        Serial.print("drawing pixel x:");
+        Serial.print(x + col);
+        Serial.print(" y:");
+        Serial.print(yrow);
+        Serial.print("color");
+        Serial.print(color);
+        Serial.println();
+        */
       } // end pixel
-    }   // end line
+    }// end line
   }
   Serial.print("bytes read ");
   Serial.println(bytes_read);
+}
+
+uint16_t read16(uint8_t *bytes)
+{
+  uint16_t result;
+  ((uint8_t *)&result)[0] = *bytes; // LSB
+  bytes++;
+  ((uint8_t *)&result)[1] = *bytes; // MSB
+  return result;
+}
+
+uint32_t read32(uint8_t* bytes)
+{
+
+  uint32_t result;
+  ((uint8_t *)&result)[0] = *bytes; // LSB
+  bytes++;
+  ((uint8_t *)&result)[1] = *bytes;
+  bytes++;
+  ((uint8_t *)&result)[2] = *bytes;
+  bytes++;
+  ((uint8_t *)&result)[3] = *bytes; // MSB
+  return result;
 }

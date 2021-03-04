@@ -17,6 +17,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using EPaper.Web.Core.Models;
+using EPaper.Web.Core.Utility;
 using ImageMagick;
 using SixLabors.ImageSharp;
 
@@ -44,15 +45,11 @@ namespace EPaper.Web.Core.Controllers
         {
             try
             {
-                var bitmap = UrlToBitmapWithResolutions(imageUrl, width, height);
+                var bitmap = BmpUtil.UrlToBitmapWithResolutions(imageUrl, width, height);
                 await this.Publish(bitmap);
-                return Ok(new ImageWrapper()
-                {
-                    Bytes = ByteArrayToString(bitmap),
-                    Base64 = ByteArrayBmpToString(bitmap),
-                    NumberOfBytes = bitmap.Length
-
-                });
+                var response = BmpUtil.ByteArrayBmpToBase64String(bitmap);
+                response.Bytes = ByteArrayToString(bitmap);
+                return Ok(response);
             }
             catch(Exception e)
             {
@@ -195,36 +192,6 @@ namespace EPaper.Web.Core.Controllers
                 Payload = bytes,
             });
         }
-
-        private static byte[] UrlToBitmapWithResolutions(string url, int width, int height)
-        {
-            using var webClient = new WebClient();
-            var data = webClient.DownloadData(url);
-
-            using var ms = new MemoryStream(data);
-            using var stream = new MemoryStream();
-           
-            using (MagickImage image = new MagickImage(data))
-            {
-                image.ColorSpace = ColorSpace.Gray;
-                image.Resize(width, height); // fit the image into the requested width and height. 
-                image.Write(stream, MagickFormat.Bmp);
-            }
-
-            using var bitmap = new Bitmap(stream);
-            using var newStream = new MemoryStream();
-            bitmap.SetResolution(0.2f, 0.1f);
-            bitmap.Save(newStream, ImageFormat.Bmp);
-            return newStream.ToArray();
-        }
-
-        private static string ByteArrayBmpToString(byte[] bytes)
-        {
-            using (MagickImage image = new MagickImage(bytes))
-            {
-                image.Format = image.Format;
-                return image.ToBase64();
-            }
-        }
+ 
     }
 }

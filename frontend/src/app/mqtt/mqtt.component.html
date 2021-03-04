@@ -1,0 +1,49 @@
+<input type="text" [(ngModel)]="imageUrl" />
+<input type="number" [(ngModel)]="width" />
+<input type="number" [(ngModel)]="height" />
+
+<button (click)="getNewImage()">Submit</button>
+<img [src]="'data:image/png;base64,' + imageWrapper.base64" />
+<textarea disabled="true">{{ imageWrapper.bytes }}</textarea>
+<h1>Number of bytes: {{ imageWrapper.numberOfBytes }}</h1>
+<h1>Depth: {{ imageWrapper.depth }}</h1>
+<table>
+  <tr>
+    <td>FileSize</td>
+    <td>{{ imageWrapper.fileSize }}</td>
+  </tr>
+  <tr>
+    <td>CreatorByte</td>
+    <td>{{ imageWrapper.creatorByte }}</td>
+  </tr>
+  <tr>
+    <td>HeaderSize</td>
+    <td>{{ imageWrapper.headerSize }}</td>
+  </tr>
+  <tr>
+    <td>Width</td>
+    <td>{{ imageWrapper.width }}</td>
+  </tr>
+  <tr>
+    <td>Height</td>
+    <td>{{ imageWrapper.height }}</td>
+  </tr>
+  <tr>
+    <td>Planes</td>
+    <td>
+      is <b>{{ imageWrapper.planes }} </b>should be 1
+    </td>
+  </tr>
+  <tr>
+    <td>Depth</td>
+    <td>
+      is <b>{{ imageWrapper.depth }}</b> should be 24, 16 or 8
+    </td>
+  </tr>
+  <tr>
+    <td>Format</td>
+    <td>
+      is <b>{{ imageWrapper.format }}</b> should be 0 or 3
+    </td>
+  </tr>
+</table>
