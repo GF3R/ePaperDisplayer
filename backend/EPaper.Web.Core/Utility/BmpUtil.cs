@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -117,8 +119,9 @@ namespace EPaper.Web.Core.Utility
                 image.Write(stream, MagickFormat.Bmp);
                 //return stream.ToArray();
             }
-      
-          
+
+
+
             using var bitmap = new Bitmap(stream);
             using var newStream = new MemoryStream();
             {
@@ -130,6 +133,107 @@ namespace EPaper.Web.Core.Utility
                 bitmap.Save(newStream, info, parameters);
                 return newStream.ToArray();
             }
+        }
+
+        public static byte[] GetBytesFromUrl(string url, int width, int height)
+        {
+            using var webClient = new WebClient();
+            var data = webClient.DownloadData(url);
+            using var ms = new MemoryStream(data);
+
+            Image newImage = new Bitmap(Image.FromStream(ms), new Size(width, height));
+            using var newStream = new MemoryStream();
+            newImage.Save(newStream, ImageFormat.Bmp);
+            newStream.Seek(0, SeekOrigin.Begin);
+            using (MagickImage image = new MagickImage(newStream))
+            {
+                image.Resize(width, height); // fit the image into the requested width and height. 
+                image.Format = MagickFormat.Bmp;
+                return Horizontal1Bit(image.GetPixels().ToByteArray(PixelMapping.RGBA), image.Width);
+            }
+
+        }
+
+
+        public static byte[] Horizontal1Bit(byte[] data, int width, int threshold = 128)
+        {
+            var outputString = "";
+            var outputIndex = 0;
+            var returnedBytes = new List<byte>();
+            var byteIndex = 7;
+            double number = 0;
+
+            // format is RGBA, so move 4 steps per pixel
+            for (var index = 0; index < data.Length; index += 4)
+            {
+                // Get the average of the RGB (we ignore A)
+                var avg = (data[index] + data[index + 1] + data[index + 2]) / 3;
+                if (avg > threshold)
+                {
+                    number += Math.Pow(2, byteIndex);
+                }
+                byteIndex--;
+
+                // if this was the last pixel of a row or the last pixel of the
+                // image, fill up the rest of our byte with zeros so it always contains 8 bits
+                if ((index != 0 && (((index / 4) + 1) % (width)) == 0) || (index == data.Length - 4))
+                {
+                    // for(var i=byteIndex;i>-1;i--){
+                    // number += Math.pow(2, i);
+                    // }
+                    byteIndex = -1;
+                }
+
+                // When we have the complete 8 bits, combine them into a hex value
+                if (byteIndex < 0)
+                {
+                    var numAsInt = Convert.ToInt32(number);
+                    returnedBytes.Add(Convert.ToByte(numAsInt));
+                    number = 0;
+                    byteIndex = 7;
+                }
+            }
+            return returnedBytes.ToArray();
+        }
+
+        public static byte[] Vertical1Bit(byte[] data, int width, int height, int threshold = 128)
+        {
+            double screenHeight = Math.Floor((double)height / 8);
+            var returnedBytes = new List<byte>();
+            for (var p = 0; p < screenHeight; p++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var byteIndex = 7;
+                    double number = 0;
+
+                    for (var y = 7; y >= 0; y--)
+                    {
+                        
+                        int index = ((p * 8) + y) * (width * 4) + x * 4;
+                        if (index > data.Length)
+                        {
+                            Debugger.Break();
+                        }
+                        var avg = (data[index] + data[index + 1] + data[index + 2]) / 3;
+                        if (avg > threshold)
+                        {
+                            number += Math.Pow(2, byteIndex);
+                        }
+                        byteIndex--;
+                    }
+                    var numAsInt = Convert.ToInt32(number);
+                    returnedBytes.Add(Convert.ToByte(numAsInt));
+                }
+            }
+            return returnedBytes.ToArray();
+        }
+        public static byte[] StringToByteArray(string hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                .Where(x => x % 2 == 0)
+                .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                .ToArray();
         }
     }
 }

@@ -41,7 +41,7 @@ namespace EPaper.Web.Core.Controllers
     
 
         [HttpPost]
-        public async Task<IActionResult> FromUrl(string imageUrl, int width, int height)
+        public async Task<IActionResult> FromUrlAsBitmap(string imageUrl, int width, int height)
         {
             try
             {
@@ -56,6 +56,23 @@ namespace EPaper.Web.Core.Controllers
                 return NotFound();
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> FromUrlAsBytes(string imageUrl, int width, int height, int threshold = 128)
+        {
+            try
+            {
+                var bitmap = BmpUtil.GetBytesFromUrl(imageUrl, width, height);
+                await this.Publish(bitmap);
+                var response = new ImageWrapper {Bytes = ByteArrayToString(bitmap)};
+                return Ok(response);
+            }
+            catch (Exception e)
+            {
+                return NotFound();
+            }
+        }
+
 
         [HttpPost]
         public async Task<MqttClientPublishResult> Clear()

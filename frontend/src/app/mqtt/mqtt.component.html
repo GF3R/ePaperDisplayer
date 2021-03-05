@@ -1,6 +1,12 @@
 <input type="text" [(ngModel)]="imageUrl" />
-<input type="number" [(ngModel)]="width" />
-<input type="number" [(ngModel)]="height" />
+<div>
+  <p>width</p>
+  <input type="number" [(ngModel)]="width" />
+</div>
+<div>
+  <p>height</p>
+  <input type="number" [(ngModel)]="height" />
+</div>
 
 <button (click)="getNewImage()">Submit</button>
 <img [src]="'data:image/png;base64,' + imageWrapper.base64" />
@@ -47,3 +53,7 @@
     </td>
   </tr>
 </table>
+<div>
+  <h2>as bytes:</h2>
+  <input type="checkbox" [(ngModel)]="asBytes" />
+</div>

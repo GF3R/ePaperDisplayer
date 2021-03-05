@@ -11,10 +11,12 @@ export class MqttComponent implements OnInit {
   imageWrapper: ImageWrapper;
   imageUrl: string;
   width: number = 300;
+  threshold: number = 128;
   height: number = 400;
+  asBytes: boolean = false;
 
-  private url: string = 'https://localhost:44316/mqtt/FromUrl?';
-
+  private url: string = 'https://localhost:44316/mqtt/FromUrlAsBitmap?';
+  private asBytesUrl: string = 'https://localhost:44316/mqtt/FromUrlAsBytes?';
   constructor(private http: HttpClient) {
     this.imageUrl =
       'https://techcrunch.com/wp-content/uploads/2018/07/logo-2.png';
@@ -27,14 +29,20 @@ export class MqttComponent implements OnInit {
   ngOnInit() {}
 
   getNewImage() {
+    let url = this.url;
+    if (this.asBytes) {
+      url = this.asBytesUrl;
+    }
     let requestUrl =
-      this.url +
+      url +
       'width=' +
       this.width +
       '&height=' +
       this.height +
       '&imageUrl=' +
-      this.imageUrl;
+      this.imageUrl +
+      '&threshold' +
+      this.threshold;
 
     this.http.post<ImageWrapper>(requestUrl, undefined).subscribe(
       (data) => {
