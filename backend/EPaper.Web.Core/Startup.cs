@@ -1,3 +1,4 @@
+using EPaper.Web.Core.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,13 @@ namespace EPaper.Web.Core
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            MqttConfiguration mqttConfiguration = Configuration
+                .GetSection("MqttConfiguration")
+                .Get<MqttConfiguration>();
+
+            services.AddSingleton(mqttConfiguration);
+
 
         }
 

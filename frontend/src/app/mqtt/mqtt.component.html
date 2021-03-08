@@ -1,59 +1,31 @@
-<input type="text" [(ngModel)]="imageUrl" />
 <div>
-  <p>width</p>
-  <input type="number" [(ngModel)]="width" />
+  <input type="text" [(ngModel)]="imageUrl" />
+  <div>
+    <p>width</p>
+    <input type="number" [(ngModel)]="width" />
+  </div>
+  <div>
+    <p>height</p>
+    <input type="number" [(ngModel)]="height" />
+  </div>
+  <br />
+  <textarea disabled="true">{{ epaperImage.ePaperBytesAsString }}</textarea>
 </div>
-<div>
-  <p>height</p>
-  <input type="number" [(ngModel)]="height" />
-</div>
-
 <button (click)="getNewImage()">Submit</button>
-<img [src]="'data:image/png;base64,' + imageWrapper.base64" />
-<textarea disabled="true">{{ imageWrapper.bytes }}</textarea>
-<h1>Number of bytes: {{ imageWrapper.numberOfBytes }}</h1>
-<h1>Depth: {{ imageWrapper.depth }}</h1>
+<img [src]="'data:image/png;base64,' + epaperImage.base64String" />
+
+<h1>Number of bytes: {{ epaperImage.numberOfBytes }}</h1>
 <table>
   <tr>
-    <td>FileSize</td>
-    <td>{{ imageWrapper.fileSize }}</td>
-  </tr>
-  <tr>
-    <td>CreatorByte</td>
-    <td>{{ imageWrapper.creatorByte }}</td>
-  </tr>
-  <tr>
-    <td>HeaderSize</td>
-    <td>{{ imageWrapper.headerSize }}</td>
+    <td>Number Of Bytes</td>
+    <td>{{ epaperImage.numberOfBytes }}</td>
   </tr>
   <tr>
     <td>Width</td>
-    <td>{{ imageWrapper.width }}</td>
+    <td>{{ epaperImage.width }}</td>
   </tr>
   <tr>
     <td>Height</td>
-    <td>{{ imageWrapper.height }}</td>
-  </tr>
-  <tr>
-    <td>Planes</td>
-    <td>
-      is <b>{{ imageWrapper.planes }} </b>should be 1
-    </td>
-  </tr>
-  <tr>
-    <td>Depth</td>
-    <td>
-      is <b>{{ imageWrapper.depth }}</b> should be 24, 16 or 8
-    </td>
-  </tr>
-  <tr>
-    <td>Format</td>
-    <td>
-      is <b>{{ imageWrapper.format }}</b> should be 0 or 3
-    </td>
+    <td>{{ epaperImage.height }}</td>
   </tr>
 </table>
-<div>
-  <h2>as bytes:</h2>
-  <input type="checkbox" [(ngModel)]="asBytes" />
-</div>
