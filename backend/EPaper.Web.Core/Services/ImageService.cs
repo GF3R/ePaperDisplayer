@@ -1,0 +1,88 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
+using EPaper.Web.Core.Models;
+using Microsoft.AspNetCore.Mvc.Formatters;
+
+namespace EPaper.Web.Core.Services
+{
+    public class ImageService
+    {
+        private readonly string _baseUrl = "http://openweathermap.org/img/wn/{0}@4x.png";
+
+        private readonly Image _baseImage = Image.FromFile("Ressources/Base.png");
+
+        public Image CreateImageFromWeather(WeatherResponse weather)
+        {
+            var fontFamily = new FontFamily("Arial");
+            var font = new Font(
+                fontFamily,
+                26,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel);
+            var todaysWeather = weather.GetWeatherOfToday();
+            var tomorrowsWeather = weather.GetWeatherOfTomorrow();
+            var today = getImageFromWeatherIconId(todaysWeather.weather.First().icon);
+            var tomorrow = getImageFromWeatherIconId(tomorrowsWeather.weather.First().icon);
+
+            using (Graphics grfx = Graphics.FromImage(_baseImage))
+            {
+                grfx.DrawImage(DrawText("Today", font, Color.Black, Color.White), 30, 10);
+                grfx.DrawImage(today, 0, 50);
+                grfx.DrawImage(DrawText(todaysWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 30, 250);
+
+                grfx.DrawImage(DrawText("Tomorrow", font, Color.Black, Color.White), 230, 10);
+                grfx.DrawImage(tomorrow, 200, 50);
+                grfx.DrawImage(DrawText(tomorrowsWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 230, 250);
+
+            }
+            return _baseImage;
+        }
+
+        private Image getImageFromWeatherIconId(string iconId)
+        {
+            using var webClient = new WebClient();
+            var url = string.Format(_baseUrl, iconId);
+            using var ms = new MemoryStream(webClient.DownloadData(url));
+            return Image.FromStream(ms);
+        }
+        private Image DrawText(String text, Font font, Color textColor, Color backColor)
+        {
+            //first, create a dummy bitmap just to get a graphics object
+            Image img = new Bitmap(1, 1);
+            Graphics drawing = Graphics.FromImage(img);
+
+            //measure the string to see how big the image needs to be
+            SizeF textSize = drawing.MeasureString(text, font);
+
+            //free up the dummy image and old graphics object
+            img.Dispose();
+            drawing.Dispose();
+
+            //create a new image of the right size
+            img = new Bitmap((int)textSize.Width, (int)textSize.Height);
+
+            drawing = Graphics.FromImage(img);
+
+            //paint the background
+            drawing.Clear(backColor);
+
+            //create a brush for the text
+            Brush textBrush = new SolidBrush(textColor);
+
+            drawing.DrawString(text, font, textBrush, 0, 0);
+
+            drawing.Save();
+
+            textBrush.Dispose();
+            drawing.Dispose();
+
+            return img;
+
+        }
+    }
+}
