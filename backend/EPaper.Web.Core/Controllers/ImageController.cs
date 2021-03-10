@@ -6,6 +6,7 @@ using MQTTnet.Client.Options;
 using MQTTnet.Client.Publishing;
 using System.Threading;
 using System.Threading.Tasks;
+using EPaper.Web.Core.Services;
 
 
 namespace EPaper.Web.Core.Controllers
@@ -35,6 +36,25 @@ namespace EPaper.Web.Core.Controllers
         public async Task<MqttClientPublishResult> Clear()
         {
             return await Publish(new byte[0]);
+        }
+
+        [HttpGet]
+        public async Task<WeatherResponse> Weather()
+        {
+            var service = new WeatherService();
+            return await service.GetWeatherData();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> WeatherImage()
+        {
+            var service = new ImageService();
+            var weather = await this.Weather();
+            var image = service.CreateImageFromWeather(weather);
+            var epaperImage = new EPaperImage(image, 400, 300);
+            epaperImage.WhiteToBlackThrehshold = 250;
+            await this.Publish(epaperImage.GetEPaperBytes());
+            return Ok(epaperImage);
         }
 
 

@@ -19,7 +19,7 @@ namespace EPaper.Web.Core.Models
 
         public int Height { get; private set; }
 
-        public int WhiteToBlackThrehshold { get; private set; } = 128;
+        public int WhiteToBlackThrehshold { get; set; } = 128;
 
         public int NumberOfBytes => Bytes.Length;
 

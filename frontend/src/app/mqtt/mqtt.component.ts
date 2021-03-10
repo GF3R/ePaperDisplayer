@@ -31,8 +31,8 @@ export class MqttComponent implements OnInit {
       this.height +
       '&imageUrl=' +
       this.imageUrl;
-
-    this.http.post<EpaperImage>(requestUrl, undefined).subscribe(
+    requestUrl = 'https://localhost:44316/image/WeatherImage';
+    this.http.get<EpaperImage>(requestUrl, undefined).subscribe(
       (data) => {
         console.log(data);
         this.epaperImage = data;
