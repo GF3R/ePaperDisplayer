@@ -6,8 +6,6 @@ namespace EPaper.Web.Core.Models
     public class Temperature
     {
         public double CelsiusDay => convertToCelsius(day);
-        public double CelsiusMinimum => convertToCelsius(min);
-        public double CelsiusMaximum => convertToCelsius(max);
         public double day { get; set; }
         public double min { get; set; }
         public double max { get; set; }
@@ -18,7 +16,7 @@ namespace EPaper.Web.Core.Models
 
         public string DayAsCelsiusString()
         {
-            return String.Format(CultureInfo.InvariantCulture, "{0:#0.## C}", this.CelsiusDay);
+            return String.Format(CultureInfo.InvariantCulture, "{0:#0.## C°}", this.CelsiusDay);
         }
 
         private double convertToCelsius(double kelvin)

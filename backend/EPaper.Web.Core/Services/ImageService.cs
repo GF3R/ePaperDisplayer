@@ -26,17 +26,18 @@ namespace EPaper.Web.Core.Services
                 GraphicsUnit.Pixel);
             var todaysWeather = weather.GetWeatherOfToday();
             var tomorrowsWeather = weather.GetWeatherOfTomorrow();
-            var today = getImageFromWeatherIconId(todaysWeather.weather.First().icon);
-            var tomorrow = getImageFromWeatherIconId(tomorrowsWeather.weather.First().icon);
 
             using (Graphics grfx = Graphics.FromImage(_baseImage))
             {
-                grfx.DrawImage(DrawText("Today", font, Color.Black, Color.White), 30, 10);
-                grfx.DrawImage(today, 0, 50);
+                var today = DateTime.Today;
+                grfx.DrawImage(DrawText($"{today:dd.MM} {today:ddd}", font, Color.Black, Color.White), 30, 10);
+                grfx.DrawImage(getImageFromWeatherIconId(todaysWeather.weather.First().icon), 0, 50);
                 grfx.DrawImage(DrawText(todaysWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 30, 250);
 
-                grfx.DrawImage(DrawText("Tomorrow", font, Color.Black, Color.White), 230, 10);
-                grfx.DrawImage(tomorrow, 200, 50);
+                var tomorrow = today.AddDays(1);
+
+                grfx.DrawImage(DrawText($"{tomorrow:dd.MM} {tomorrow:ddd}", font, Color.Black, Color.White), 230, 10);
+                grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.weather.First().icon), 200, 50);
                 grfx.DrawImage(DrawText(tomorrowsWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 230, 250);
 
             }
