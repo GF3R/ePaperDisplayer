@@ -1,5 +1,4 @@
-﻿using ImageMagick;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -53,19 +52,29 @@ namespace EPaper.Web.Core.Models
 
         public byte[] GetEPaperBytes()
         {
-            using (MagickImage magickImage = new MagickImage(this.Bytes))
+            var ms = new MemoryStream(this.Bytes);
+            var imagePixels = new List<byte>();
+            Bitmap img = new Bitmap(ms);
+            for (int i = 0; i < img.Height; i++)
             {
-                magickImage.Format = MagickFormat.Bmp;
-                var imagePixels = magickImage.GetPixels().ToByteArray(PixelMapping.RGBA);
-                switch (this.EPaperType)
+                for (int j = 0; j < img.Width; j++)
                 {
-                    case EPaperType.Vertical1Bit:
-                        return Vertical1Bit(imagePixels);
-                    case EPaperType.Horizontal1Bit:
-                        return Horizontal1Bit(imagePixels);
-                    default:
-                        throw new ArgumentOutOfRangeException();
+                    Color pixel = img.GetPixel(j, i);
+                    imagePixels.Add(pixel.R);
+                    imagePixels.Add(pixel.G);
+                    imagePixels.Add(pixel.B);
+                    imagePixels.Add(pixel.A);
+
                 }
+            }
+            switch (this.EPaperType)
+            {
+                case EPaperType.Vertical1Bit:
+                    return Vertical1Bit(imagePixels.ToArray());
+                case EPaperType.Horizontal1Bit:
+                    return Horizontal1Bit(imagePixels.ToArray());
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
