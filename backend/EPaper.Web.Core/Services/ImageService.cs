@@ -32,7 +32,7 @@ namespace EPaper.Web.Core.Services
 
             var todaysWeather = weather.GetWeatherOfToday();
             var tomorrowsWeather = weather.GetWeatherOfTomorrow();
-
+            var nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZone.CurrentTimeZone.StandardName));
             using (Graphics grfx = Graphics.FromImage(_baseImage))
             {
                 var today = DateTime.Today;
@@ -45,7 +45,7 @@ namespace EPaper.Web.Core.Services
                 grfx.DrawImage(DrawText($"{tomorrow:dd.MM} {tomorrow:ddd}", font, Color.Black, Color.White), 230, 10);
                 grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.weather.First().icon), 200, 50);
                 grfx.DrawImage(DrawText(tomorrowsWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 230, 250);
-                grfx.DrawImage(DrawText(DateTime.Now.ToString("HH:mm"), small, Color.Black, Color.White), 350, 280);
+                grfx.DrawImage(DrawText(nowInTimeZone.ToString("HH:mm"), small, Color.Black, Color.White), 350, 280);
 
             }
             return _baseImage;
