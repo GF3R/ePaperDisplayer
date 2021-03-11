@@ -4,7 +4,7 @@ The goal of this side project is to use an EPaper display to display custom mess
 
 ## Interacting with the Display
 
-First I had to understand how to send Images to the ePaper display. The device is described [here](https://www.waveshare.com/wiki/4.2inch_e-Paper_Module), however this was way to technical for me and I kept looking.  Quite quickly i found the library [GxEPD](https://github.com/ZinggJM/GxEPD) with some handy [examples](https://github.com/ZinggJM/GxEPD/blob/master/examples/GxEPD_MultiDisplayExample/GxEPD_MultiDisplayExample.ino). 
+First I had to understand how to send Images to the ePaper display. The device is described [here](https://www.waveshare.com/wiki/4.2inch_e-Paper_Module), however this was way to technical for me, so I kept looking.  Quite quickly i found the library [GxEPD](https://github.com/ZinggJM/GxEPD) with some handy [examples](https://github.com/ZinggJM/GxEPD/blob/master/examples/GxEPD_MultiDisplayExample/GxEPD_MultiDisplayExample.ino). 
 
 I downloaded the example configured it and was able to display the example images. Great!
 
