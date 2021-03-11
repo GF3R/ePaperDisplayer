@@ -4,7 +4,7 @@ The goal of this side project is to use an EPaper display to display custom mess
 
 ## Interacting with the Display
 
-First I had to understand how to send Images to the ePaper display. The device is descriped [here](https://www.waveshare.com/wiki/4.2inch_e-Paper_Module), however this was way to technical for my developer brain and I kept looking.  Quite quickly i found the library [GxEPD](https://github.com/ZinggJM/GxEPD) with some handy [examples](https://github.com/ZinggJM/GxEPD/blob/master/examples/GxEPD_MultiDisplayExample/GxEPD_MultiDisplayExample.ino). 
+First I had to understand how to send Images to the ePaper display. The device is described [here](https://www.waveshare.com/wiki/4.2inch_e-Paper_Module), however this was way to technical for me and I kept looking.  Quite quickly i found the library [GxEPD](https://github.com/ZinggJM/GxEPD) with some handy [examples](https://github.com/ZinggJM/GxEPD/blob/master/examples/GxEPD_MultiDisplayExample/GxEPD_MultiDisplayExample.ino). 
 
 I downloaded the example configured it and was able to display the example images. Great!
 
@@ -12,13 +12,13 @@ I downloaded the example configured it and was able to display the example image
 
 Since we want to be able to display images without manually interacting with the ESP32 we need to somehow send the data to the device.
 
-To send and recieve the image data to the ESP32 I will use [MQTT](https://mqtt.org/), because it is leightweight, perfect for an IoT devices but mostly because I know how to use it.
+To send and receive the image data to the ESP32 I will use [MQTT](https://mqtt.org/), because it is lightweight, perfect for an IoT devices but mostly because I know how to use it.
 
-The data recieving function looks as follows:
+The data receiving function looks as follows:
 ```c++
 void callback(char *topic, byte *message, unsigned int length)
 {
-  Serial.println("Recieved message with length:");
+  Serial.println("Received message with length:");
   Serial.println(length);
   if (length == 0)
   {
@@ -30,7 +30,7 @@ void callback(char *topic, byte *message, unsigned int length)
 }
 ```
 
-To send any data I built a backend that converts an image by a given URL to a Bitmap image and extracts the byte data. This byte data is then published via MQTT. Also a frontend was built to test everything. I was able to send data and verify it was recieved on the ESP32, however only garbage was displayed. It became clear, that I cannot display bitmap Images out of the box.
+To send any data I built a backend that converts an image by a given URL to a Bitmap image and extracts the byte data. This byte data is then published via MQTT. Also a frontend was built to test everything. I was able to send data and verify it was received on the ESP32, however only garbage was displayed. It became clear, that I cannot display bitmap Images out of the box.
 
 After a lot of research, writing and copying painful c++ code, I was able to display a Bitmap by reading the header and the image data manually: 
 ```c++
@@ -76,21 +76,21 @@ The site is opensource, so I was able to use the implemented logic and just had 
 
 ![Success](2021-03-11-09-48-27.png)
 
-This then enabled me to send full sized (400px * 300px) to the ESP32 and display them! Hurra!
+This then enabled me to send full sized (400px * 300px) to the ESP32 and display them! Hurray!
 
 ## Displaying the Weather
 
 Now I knew how to display any picture I wanted and decided to try and display todays and tomorrows weather. To get the weather data i used [openweathermap.org](https://openweathermap.org/api/one-call-api) which is a simple and free weather api. 
 
-Then I implemtned all the classes and a service calling the API in the backend. All that was left, was to build an image from the given weather report. 
+Then I implemented all the classes and a service calling the API in the backend. All that was left, was to build an image from the given weather report. 
 This was much simpler than feared, openweather even offers the icons and all I needed was some sort of base image with the right size, and place all other images onto this display: 
 
 ![Weather](2021-03-11-09-54-43.png)
 
-## Updating the weather continously
+## Updating the weather continuously
 
-To update the weather continously, i created a GET method which, when called, gets the newest weather and updates the display with the created image. 
-This API was then deployed onto a rasperry pi and a timed job, which calls the API every 4 hours was added using [cron](https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-ubuntu-1804).
+To update the weather continuously, a GET method was created which, when called, gets the newest weather and updates the display with the created image. 
+This API was then deployed onto a raspberry pi and a timed job, which calls the API every 4 hours was added using [cron](https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-ubuntu-1804).
 
 ## Next Steps
 
@@ -99,7 +99,7 @@ I will try to build a nice case for the display, so it can actually be hung up. 
 
 ## TL;DR
 
-EPaper display recieves Image from todays and tomorrows weather report every 4 hours and displays the given image. The Image gets broken down to Pixel Data by .net core backend so it can be easly sent via MQTT and the ESP32 does not have to calculate anything. Everything is scheduled using cron.
+EPaper display receives Image from todays and tomorrows weather report every 4 hours and displays the given image. The Image gets broken down to Pixel Data by .net core backend so it can be easily sent via MQTT and the ESP32 does not have to calculate anything. Everything is scheduled using cron.
 
 ## Components
 
@@ -113,9 +113,9 @@ The components used were the following:
 
 The code was written in .net core, c++ and angular, however the angular frontend was simply used to test the backend and will not be deployed anywhere.
 
-All the code is avaialabe in my [repository](https://gf3r.visualstudio.com/EPaper/_git/EPaper.Web)
+All the code is available in my [repository](https://gf3r.visualstudio.com/EPaper/_git/EPaper.Web)
 
 ## Deployment
 
-The asp .net core applicationw was deployed using azure pipelines onto a self hosted agent on a Raspberry PI running Ubuntu Server.
+The asp .net core application was deployed using azure pipelines onto a self hosted agent on a Raspberry PI running Ubuntu Server.
 
