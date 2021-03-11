@@ -24,6 +24,12 @@ namespace EPaper.Web.Core.Services
                 26,
                 FontStyle.Regular,
                 GraphicsUnit.Pixel);
+            var small = new Font(
+                fontFamily,
+                12,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel);
+
             var todaysWeather = weather.GetWeatherOfToday();
             var tomorrowsWeather = weather.GetWeatherOfTomorrow();
 
@@ -39,6 +45,7 @@ namespace EPaper.Web.Core.Services
                 grfx.DrawImage(DrawText($"{tomorrow:dd.MM} {tomorrow:ddd}", font, Color.Black, Color.White), 230, 10);
                 grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.weather.First().icon), 200, 50);
                 grfx.DrawImage(DrawText(tomorrowsWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 230, 250);
+                grfx.DrawImage(DrawText(DateTime.Now.ToString("HH:mm"), small, Color.Black, Color.White), 350, 280);
 
             }
             return _baseImage;
@@ -51,6 +58,7 @@ namespace EPaper.Web.Core.Services
             using var ms = new MemoryStream(webClient.DownloadData(url));
             return Image.FromStream(ms);
         }
+
         private Image DrawText(String text, Font font, Color textColor, Color backColor)
         {
             //first, create a dummy bitmap just to get a graphics object
