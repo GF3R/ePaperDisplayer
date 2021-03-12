@@ -1,14 +1,14 @@
 # EPaper Display
 
-The goal of this side project is to use an EPaper display to display custom messages or the weather.
+The goal of this side project is to use an EPaper display to display custom messages or the weather. [TL;DR](#tldr)
 
-## Interacting with the Display
+## 1 Interacting with the Display
 
 First I had to understand how to send Images to the ePaper display. The device is described [here](https://www.waveshare.com/wiki/4.2inch_e-Paper_Module), however this was way to technical for me, so I kept looking.  Quite quickly i found the library [GxEPD](https://github.com/ZinggJM/GxEPD) with some handy [examples](https://github.com/ZinggJM/GxEPD/blob/master/examples/GxEPD_MultiDisplayExample/GxEPD_MultiDisplayExample.ino). 
 
 I downloaded the example configured it and was able to display the example images. Great!
 
-## Sending Image Data
+## 2 Sending Image Data
 
 Since we want to be able to display images without manually interacting with the ESP32 we need to somehow send the data to the device.
 
@@ -68,7 +68,7 @@ This actually worked, but i was only able to display tiny images, due to image f
 
 After a few days of struggling with the bitmap format and not making any real progress due to compression, file depth, and c# image libraries, I tried a new approach.
 
-## Converting the Image Data
+## 3 Converting the Image Data
 
 The best way to send the data, would be to do all the calculations needed on the server and simply send the necessary pixel array to the ESP32. This is somewhat complicated, luckily i found the Website [image2cpp](https://javl.github.io/image2cpp/) which already does this. 
 
@@ -78,7 +78,7 @@ The site is opensource, so I was able to use the implemented logic and just had 
 
 This then enabled me to send full sized (400px * 300px) to the ESP32 and display them! Hurray!
 
-## Displaying the Weather
+## 4 Displaying the Weather
 
 Now I knew how to display any picture I wanted and decided to try and display todays and tomorrows weather. To get the weather data i used [openweathermap.org](https://openweathermap.org/api/one-call-api) which is a simple and free weather api. 
 
@@ -87,12 +87,12 @@ This was much simpler than feared, openweather even offers the icons and all I n
 
 ![Weather](2021-03-11-09-54-43.png)
 
-## Updating the weather continuously
+## 5 Updating the weather continuously
 
 To update the weather continuously, a GET method was created which, when called, gets the newest weather and updates the display with the created image. 
 This API was then deployed onto a raspberry pi and a timed job, which calls the API every 4 hours was added using [cron](https://www.digitalocean.com/community/tutorials/how-to-use-cron-to-automate-tasks-ubuntu-1804).
 
-## Next Steps
+## 6 Next Steps
 
 I will try to build a nice case for the display, so it can actually be hung up. Furthermore I will try to display additional information, like appointments, messages etc. For such functions, maybe buttons will be added to the constructions.
 
@@ -111,11 +111,7 @@ The components used were the following:
 
 ## Code
 
-The code was written in .net core, c++ and angular, however the angular frontend was simply used to test the backend and will not be deployed anywhere.
+The code was written in .net core, c++ and angular, however the angular frontend was only used to test the backend and will not be deployed anywhere.
 
 All the code is available in my [repository](https://gf3r.visualstudio.com/EPaper/_git/EPaper.Web)
-
-## Deployment
-
-The asp .net core application was deployed using azure pipelines onto a self hosted agent on a Raspberry PI running Ubuntu Server.
 
