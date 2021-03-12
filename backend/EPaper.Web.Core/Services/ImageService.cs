@@ -47,9 +47,9 @@ namespace EPaper.Web.Core.Services
             {
                 grfx.DrawImage(DrawText($"{weatherInOneHour.DateTime:ddd HH:mm}", font, Color.Black, Color.White), 35, 10);
                 grfx.DrawImage(getImageFromWeatherIconId(weatherInOneHour.ImageUrl), 0, 50);
-                grfx.DrawImage(DrawText(weatherInOneHour.CurrTempAsString, font, Color.Black, Color.White), 60, 250);
-                grfx.DrawImage(DrawText(weather.Now.CurrTempAsString, small, Color.Black, Color.White), 30, 270);
-                grfx.DrawImage(DrawText(weather.InTwoHoursWeather.CurrTempAsString, small, Color.Black, Color.White), 95, 270);
+                grfx.DrawImage(DrawText(weatherInOneHour.CurrTempAsString, font, Color.Black, Color.White), 60, 220);
+                grfx.DrawImage(DrawText(weather.Now.CurrTempAsString, small, Color.Black, Color.White), 30, 250);
+                grfx.DrawImage(DrawText(weather.InTwoHoursWeather.CurrTempAsString, small, Color.Black, Color.White), 100, 250);
 
                 grfx.DrawImage(DrawText($"{tomorrowsWeather.DateTime:ddd dd.MM}", font, Color.Black, Color.White), 250, 10);
                 grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.ImageUrl), 200, 50);
