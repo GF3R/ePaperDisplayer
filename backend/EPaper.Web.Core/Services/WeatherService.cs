@@ -65,13 +65,14 @@ namespace EPaper.Web.Core.Services
         private WeatherForecast ToWeather(WeatherResponse response)
         {
             var hourlyForecast = response.forecast.SixtyMinutes;
+            hourlyForecast.Sort((x, y) => DateTime.Compare(x.local_date_time, y.local_date_time));
             var now = DateTime.Now;
             return new WeatherForecast
             {
-                Now = hourlyForecast.Where(item => item.local_date_time >= now && item.local_date_time <= now.AddHours(1)).Select(ForecastToHourlyWeather).First(),
-                InOneHoursWeather = hourlyForecast.Where(item => item.local_date_time >= now.AddHours(1) && item.local_date_time <= now.AddHours(2)).Select(ForecastToHourlyWeather).First(),
-                InTwoHoursWeather = hourlyForecast.Where(item => item.local_date_time >= now.AddHours(2) && item.local_date_time <= now.AddHours(3)).Select(ForecastToHourlyWeather).First(),
-                InThreeHoursWeather = hourlyForecast.Where(item => item.local_date_time >= now.AddHours(3) && item.local_date_time <= now.AddHours(4)).Select(ForecastToHourlyWeather).First(),
+                Now = hourlyForecast.Where(item => item.local_date_time.Hour == now.Hour).Select(ForecastToHourlyWeather).First(),
+                InOneHoursWeather = hourlyForecast.Where(item => item.local_date_time.Hour == now.AddHours(1).Hour).Select(ForecastToHourlyWeather).First(),
+                InTwoHoursWeather = hourlyForecast.Where(item => item.local_date_time.Hour == now.AddHours(2).Hour).Select(ForecastToHourlyWeather).First(),
+                InThreeHoursWeather = hourlyForecast.Where(item => item.local_date_time.Hour == now.AddHours(3).Hour).Select(ForecastToHourlyWeather).First(),
                 TodaysWeather = response.forecast.day.Where(item => item.local_date_time.Date == now.Date).Select(ForecastToDailyWeather).First(),
                 TomorrowsWeather = response.forecast.day.Where(item => item.local_date_time.Date == now.AddDays(1).Date).Select(ForecastToDailyWeather).First(),
             };
