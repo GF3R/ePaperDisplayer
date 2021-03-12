@@ -32,7 +32,8 @@ namespace EPaper.Web.Core.Services
 
             var weatherInOneHour = weather.InOneHoursWeather;
             var tomorrowsWeather = weather.TomorrowsWeather;
-            DateTime nowInTimeZone;
+
+            DateTime nowInTimeZone = DateTime.Now;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZone.CurrentTimeZone.StandardName));
