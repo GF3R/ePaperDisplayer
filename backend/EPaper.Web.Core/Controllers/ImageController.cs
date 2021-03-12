@@ -16,11 +16,13 @@ namespace EPaper.Web.Core.Controllers
     public class ImageController : Controller
     {
         private readonly MqttConfiguration _mqttConfiguration;
+        private readonly IWeatherService _weatherService;
         private readonly IMqttClient _mqttClient;
 
-        public ImageController(MqttConfiguration mqttConfiguration)
+        public ImageController(MqttConfiguration mqttConfiguration, IWeatherService weatherService)
         {
             _mqttConfiguration = mqttConfiguration;
+            _weatherService = weatherService;
             this._mqttClient = new MqttFactory().CreateMqttClient();
         }
 
@@ -39,10 +41,9 @@ namespace EPaper.Web.Core.Controllers
         }
 
         [HttpGet]
-        public async Task<WeatherResponse> Weather()
+        public async Task<WeatherForecast> Weather()
         {
-            var service = new WeatherService();
-            return await service.GetWeatherData();
+            return await _weatherService.GetWeatherForecast();
         }
 
         [HttpGet]
@@ -51,8 +52,7 @@ namespace EPaper.Web.Core.Controllers
             var service = new ImageService();
             var weather = await this.Weather();
             var image = service.CreateImageFromWeather(weather);
-            var epaperImage = new EPaperImage(image, 400, 300);
-            epaperImage.WhiteToBlackThrehshold = 250;
+            var epaperImage = new EPaperImage(image, 400, 300) {WhiteToBlackThrehshold = 245};
             await this.Publish(epaperImage.GetEPaperBytes());
             return Ok(epaperImage);
         }

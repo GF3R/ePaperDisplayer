@@ -1,4 +1,6 @@
+using System;
 using EPaper.Web.Core.Models;
+using EPaper.Web.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -25,8 +27,14 @@ namespace EPaper.Web.Core
             MqttConfiguration mqttConfiguration = Configuration
                 .GetSection("MqttConfiguration")
                 .Get<MqttConfiguration>();
+            TypeCodeConfiguration typeCodeConfiguration = Configuration
+                .GetSection("typeCodeConfiguration")
+                .Get<TypeCodeConfiguration>();
 
             services.AddSingleton(mqttConfiguration);
+            services.AddSingleton(typeCodeConfiguration);
+            services.AddScoped<IWeatherService, WeatherService>();
+
 
 
         }

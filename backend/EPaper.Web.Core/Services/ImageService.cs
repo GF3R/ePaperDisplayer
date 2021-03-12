@@ -6,22 +6,21 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using EPaper.Web.Core.Models;
+using EPaper.Web.Core.Utility;
 using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace EPaper.Web.Core.Services
 {
     public class ImageService
     {
-        private readonly string _baseUrl = "http://openweathermap.org/img/wn/{0}@4x.png";
-
         private readonly Image _baseImage = Image.FromFile("Ressources/Base.png");
 
-        public Image CreateImageFromWeather(WeatherResponse weather)
+        public Image CreateImageFromWeather(WeatherForecast weather)
         {
             var fontFamily = new FontFamily("Arial");
             var font = new Font(
                 fontFamily,
-                26,
+                18,
                 FontStyle.Regular,
                 GraphicsUnit.Pixel);
             var small = new Font(
@@ -30,33 +29,33 @@ namespace EPaper.Web.Core.Services
                 FontStyle.Regular,
                 GraphicsUnit.Pixel);
 
-            var todaysWeather = weather.GetWeatherOfToday();
-            var tomorrowsWeather = weather.GetWeatherOfTomorrow();
+            var weatherInOneHour = weather.InOneHoursWeather;
+            var tomorrowsWeather = weather.TomorrowsWeather;
             var nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZone.CurrentTimeZone.StandardName));
             using (Graphics grfx = Graphics.FromImage(_baseImage))
             {
-                var today = DateTime.Today;
-                grfx.DrawImage(DrawText($"{today:dd.MM} {today:ddd}", font, Color.Black, Color.White), 30, 10);
-                grfx.DrawImage(getImageFromWeatherIconId(todaysWeather.weather.First().icon), 0, 50);
-                grfx.DrawImage(DrawText(todaysWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 30, 250);
+                grfx.DrawImage(DrawText($"{weatherInOneHour.DateTime:ddd HH:mm}", font, Color.Black, Color.White), 35, 10);
+                grfx.DrawImage(getImageFromWeatherIconId(weatherInOneHour.ImageUrl), 0, 50);
+                grfx.DrawImage(DrawText(weatherInOneHour.CurrTempAsString, font, Color.Black, Color.White), 60, 250);
+                grfx.DrawImage(DrawText(weather.Now.CurrTempAsString, small, Color.Black, Color.White), 30, 270);
+                grfx.DrawImage(DrawText(weather.InTwoHoursWeather.CurrTempAsString, small, Color.Black, Color.White), 95, 270);
 
-                var tomorrow = today.AddDays(1);
+                grfx.DrawImage(DrawText($"{tomorrowsWeather.DateTime:ddd dd.MM}", font, Color.Black, Color.White), 250, 10);
+                grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.ImageUrl), 200, 50);
+                grfx.DrawImage(DrawText(tomorrowsWeather.MinTempAsString, font, Color.Black, Color.White), 250, 250);
+                grfx.DrawImage(DrawText(tomorrowsWeather.MaxTempAsString, font, Color.Black, Color.White), 290, 220);
 
-                grfx.DrawImage(DrawText($"{tomorrow:dd.MM} {tomorrow:ddd}", font, Color.Black, Color.White), 230, 10);
-                grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.weather.First().icon), 200, 50);
-                grfx.DrawImage(DrawText(tomorrowsWeather.temp.DayAsCelsiusString(), font, Color.Black, Color.White), 230, 250);
                 grfx.DrawImage(DrawText(nowInTimeZone.ToString("HH:mm"), small, Color.Black, Color.White), 350, 280);
 
             }
             return _baseImage;
         }
 
-        private Image getImageFromWeatherIconId(string iconId)
+        private Image getImageFromWeatherIconId(string iconUrl)
         {
             using var webClient = new WebClient();
-            var url = string.Format(_baseUrl, iconId);
-            using var ms = new MemoryStream(webClient.DownloadData(url));
-            return Image.FromStream(ms);
+            using var ms = new MemoryStream(webClient.DownloadData(iconUrl));
+            return Image.FromStream(ms).ResizeImage(180, 180);
         }
 
         private Image DrawText(String text, Font font, Color textColor, Color backColor)
