@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using EPaper.Web.Core.Models;
 using EPaper.Web.Core.Utility;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -31,7 +32,16 @@ namespace EPaper.Web.Core.Services
 
             var weatherInOneHour = weather.InOneHoursWeather;
             var tomorrowsWeather = weather.TomorrowsWeather;
-            var nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZone.CurrentTimeZone.StandardName));
+            DateTime nowInTimeZone;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZone.CurrentTimeZone.StandardName));
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Europe/Zurich"));
+            }
+
             using (Graphics grfx = Graphics.FromImage(_baseImage))
             {
                 grfx.DrawImage(DrawText($"{weatherInOneHour.DateTime:ddd HH:mm}", font, Color.Black, Color.White), 35, 10);
