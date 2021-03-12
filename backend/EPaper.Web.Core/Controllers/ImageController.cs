@@ -75,6 +75,7 @@ namespace EPaper.Web.Core.Controllers
             {
                 Topic = _mqttConfiguration.Topic,
                 Payload = bytes,
+                Retain = true
             });
         }
 
