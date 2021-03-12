@@ -1,20 +1,21 @@
 # Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+The goal of this side project is to use an EPaper display to display custom messages or the weather. A full Report can be found [here](https://gf3r.visualstudio.com/EPaper/_git/EPaper.Web?path=%2Fdocs%2FSummary.md&version=GBmain&_a=preview).
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## Components
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+The components used were the following:
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+- [EPaper display](https://www.bastelgarage.ch/400x300-4-2inch-e-ink-display?search=400x300%204.2inch%20E-Ink%20Display)
+- [ESP32](https://www.bastelgarage.ch/wemos-lolin32-lite-board-esp32-rev1-4-mb-flash?search=esp32)
+- Raspberry Pi
+- Cables
+
+## Code
+
+The code is split up into 4 areas:
+
+- [backend](./backend) - The ASP .NET core application, responsible for handling and sending image data.
+- [frontend](./frontend) - The angular application used to debug the backend.
+- [embedded](./embedded) - The C++ code for the ESP32, visualising the image data.
+- [build](./build) - WIP
