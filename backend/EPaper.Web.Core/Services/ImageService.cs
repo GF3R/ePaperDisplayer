@@ -66,7 +66,7 @@ namespace EPaper.Web.Core.Services
         {
             using var webClient = new WebClient();
             using var ms = new MemoryStream(webClient.DownloadData(iconUrl));
-            return Image.FromStream(ms).ResizeImage(180, 180);
+            return ReplaceWwithBColor(Image.FromStream(ms).ResizeImage(180, 180));
         }
 
         private Image DrawText(String text, Font font, Color textColor, Color backColor)
@@ -102,6 +102,34 @@ namespace EPaper.Web.Core.Services
 
             return img;
 
+        }
+
+        private static Bitmap ReplaceWwithBColor(Image image)
+        {
+            Color black = Color.Black; //Your desired colour
+            Color white = Color.White;
+
+            Bitmap bmp = new Bitmap(image);
+            for (int x = 0; x < bmp.Width; x++)
+            {
+                for (int y = 0; y < bmp.Height; y++)
+                {
+                    Color gotColor = bmp.GetPixel(x, y);
+                    if (gotColor.GetBrightness() >= 0.99)
+                    {
+                        gotColor = Color.FromArgb(black.R, black.G, black.B);
+                    }
+                    else if (gotColor.GetBrightness() > 0.85 && gotColor.GetBrightness() < 0.98)
+                    {
+                        gotColor = Color.FromArgb(white.R, white.G, white.B);
+
+                    }
+
+                    bmp.SetPixel(x, y, gotColor);
+                }
+            }
+
+            return bmp;
         }
     }
 }
