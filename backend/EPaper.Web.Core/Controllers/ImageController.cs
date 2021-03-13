@@ -6,6 +6,7 @@ using MQTTnet.Client.Options;
 using MQTTnet.Client.Publishing;
 using System.Threading;
 using System.Threading.Tasks;
+using EPaper.Web.Core.Models.Configurations;
 using EPaper.Web.Core.Services;
 
 
@@ -16,12 +17,14 @@ namespace EPaper.Web.Core.Controllers
     public class ImageController : Controller
     {
         private readonly MqttConfiguration _mqttConfiguration;
+        private readonly ImageConfiguration _imageConfiguration;
         private readonly IWeatherService _weatherService;
         private readonly IMqttClient _mqttClient;
 
-        public ImageController(MqttConfiguration mqttConfiguration, IWeatherService weatherService)
+        public ImageController(MqttConfiguration mqttConfiguration, ImageConfiguration imageConfiguration, IWeatherService weatherService)
         {
             _mqttConfiguration = mqttConfiguration;
+            _imageConfiguration = imageConfiguration;
             _weatherService = weatherService;
             this._mqttClient = new MqttFactory().CreateMqttClient();
         }
@@ -52,7 +55,7 @@ namespace EPaper.Web.Core.Controllers
             var service = new ImageService();
             var weather = await this.Weather();
             var image = service.CreateImageFromWeather(weather);
-            var epaperImage = new EPaperImage(image, 400, 300) {WhiteToBlackThrehshold = 245};
+            var epaperImage = new EPaperImage(image, _imageConfiguration.Width, _imageConfiguration.Height) { WhiteToBlackThrehshold = _imageConfiguration.Threshold };
             await this.Publish(epaperImage.GetEPaperBytes());
             return Ok(epaperImage);
         }

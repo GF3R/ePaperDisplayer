@@ -1,5 +1,6 @@
 using System;
 using EPaper.Web.Core.Models;
+using EPaper.Web.Core.Models.Configurations;
 using EPaper.Web.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -24,15 +25,17 @@ namespace EPaper.Web.Core
         {
             services.AddControllers();
 
-            MqttConfiguration mqttConfiguration = Configuration
+            var mqttConfiguration = Configuration
                 .GetSection("MqttConfiguration")
                 .Get<MqttConfiguration>();
-            TypeCodeConfiguration typeCodeConfiguration = Configuration
-                .GetSection("typeCodeConfiguration")
+            var typeCodeConfiguration = Configuration
+                .GetSection("TypeCodeConfiguration")
                 .Get<TypeCodeConfiguration>();
+            var imageConfiguration = Configuration.GetSection("ImageConfiguration").Get<ImageConfiguration>();
 
             services.AddSingleton(mqttConfiguration);
             services.AddSingleton(typeCodeConfiguration);
+            services.AddSingleton(imageConfiguration);
             services.AddScoped<IWeatherService, WeatherService>();
 
 
