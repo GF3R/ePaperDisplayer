@@ -19,6 +19,8 @@ char buf[200];
 char fullpubtopic[50];
 char fullsubtopic[50];
 char *combined;
+int retries = 0;
+int maxRetries = 50;
 WiFiClient wificlient;
 PubSubClient client(wificlient);
 char *DEVICEID = "EPAPER-001";
@@ -52,13 +54,7 @@ void setup()
 
 void loop()
 {
-
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.println("connection lost");
-    WiFi.reconnect();
-  }
-  while (!client.connected())
+  if(!client.connected()) 
   {
     reconnect();
   }
@@ -91,10 +87,16 @@ void setupWifi()
   WiFi.begin(ssid, pass);
   while (WiFi.status() != WL_CONNECTED)
   {
+    retries++;
     delay(500);
     Serial.print(".");
+    if(retries > maxRetries){
+        retries = 0;
+        WiFi.begin(ssid, pass);  
+    }
+    Serial.print(retries);
   }
-
+  retries = 0;
   Serial.println("");
   Serial.println("WiFi connected");
 }
@@ -123,7 +125,13 @@ void reconnect()
 {
   while (!client.connected())
   {
+       if (WiFi.status() != WL_CONNECTED)
+        {
+          Serial.println("connection lost");
+          WiFi.reconnect();
+        }
     Serial.print("Attempting MQTT connection...");
+    Serial.print(retries);
     if (client.connect(DEVICEID, mqtt_user, mqtt_pass))
     {
       Serial.println("connected");

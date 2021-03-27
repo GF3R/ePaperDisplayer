@@ -1,4 +1,5 @@
-﻿using EPaper.Web.Core.Models;
+﻿using System;
+using EPaper.Web.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using MQTTnet;
 using MQTTnet.Client;
@@ -18,14 +19,18 @@ namespace EPaper.Web.Core.Controllers
     {
         private readonly MqttConfiguration _mqttConfiguration;
         private readonly ImageConfiguration _imageConfiguration;
+        private readonly TypeCodeConfiguration _typeCodeConfiguration;
         private readonly IWeatherService _weatherService;
+        private readonly IImageService _imageService;
         private readonly IMqttClient _mqttClient;
 
-        public ImageController(MqttConfiguration mqttConfiguration, ImageConfiguration imageConfiguration, IWeatherService weatherService)
+        public ImageController(MqttConfiguration mqttConfiguration, ImageConfiguration imageConfiguration, TypeCodeConfiguration typeCodeConfiguration, IWeatherService weatherService, IImageService imageService)
         {
             _mqttConfiguration = mqttConfiguration;
             _imageConfiguration = imageConfiguration;
+            _typeCodeConfiguration = typeCodeConfiguration;
             _weatherService = weatherService;
+            _imageService = imageService;
             this._mqttClient = new MqttFactory().CreateMqttClient();
         }
 
@@ -52,17 +57,35 @@ namespace EPaper.Web.Core.Controllers
         [HttpGet]
         public async Task<IActionResult> WeatherImage()
         {
-            var service = new ImageService();
             var weather = await this.Weather();
-            var image = service.CreateImageFromWeather(weather);
+            var image = this._imageService.CreateImageFromWeather(weather);
             var epaperImage = new EPaperImage(image, _imageConfiguration.Width, _imageConfiguration.Height) { WhiteToBlackThrehshold = _imageConfiguration.Threshold };
             await this.Publish(epaperImage.GetEPaperBytes());
             return Ok(epaperImage);
         }
 
+        [HttpGet]
+        public async Task DisplayAllimages()
+        {
+            var baseUrl = _typeCodeConfiguration.BaseUrl;
+            foreach (var typeCode in _typeCodeConfiguration.WeatherTypeCodes)
+            {
+                var image = this._imageService.GetImageFromWeatherIconUrl($"{baseUrl}{typeCode.File}", 400, 300);
+                var epaperImage = new EPaperImage(image, _imageConfiguration.Width, _imageConfiguration.Height) { WhiteToBlackThrehshold = _imageConfiguration.Threshold };
+                await this.Publish(epaperImage.GetEPaperBytes());
+                Thread.Sleep(1500);
+            }
+        }
+
+
 
         private async Task Connect()
         {
+            if (_mqttClient.IsConnected)
+            {
+                return;
+            }
+
             var options = new MqttClientOptionsBuilder()
                 .WithClientId(_mqttConfiguration.ClientId)
                 .WithTcpServer(_mqttConfiguration.Server, _mqttConfiguration.Port)

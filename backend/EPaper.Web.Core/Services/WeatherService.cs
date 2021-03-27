@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EPaper.Web.Core.Models;
+using EPaper.Web.Core.Models.Configurations;
 using Newtonsoft.Json.Linq;
 
 namespace EPaper.Web.Core.Services

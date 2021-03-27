@@ -1,4 +1,4 @@
-﻿namespace EPaper.Web.Core.Models
+﻿namespace EPaper.Web.Core.Models.Configurations
 {
     public class MqttConfiguration
     {

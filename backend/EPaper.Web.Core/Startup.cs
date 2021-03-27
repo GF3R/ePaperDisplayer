@@ -37,6 +37,7 @@ namespace EPaper.Web.Core
             services.AddSingleton(typeCodeConfiguration);
             services.AddSingleton(imageConfiguration);
             services.AddScoped<IWeatherService, WeatherService>();
+            services.AddScoped<IImageService, ImageService>();
 
 
 

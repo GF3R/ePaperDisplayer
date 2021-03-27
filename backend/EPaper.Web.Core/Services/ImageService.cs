@@ -1,20 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using EPaper.Web.Core.Models;
+using EPaper.Web.Core.Utility;
+using System;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
-using EPaper.Web.Core.Models;
-using EPaper.Web.Core.Utility;
-using Microsoft.AspNetCore.Mvc.Formatters;
+using EPaper.Web.Core.Models.Configurations;
 
 namespace EPaper.Web.Core.Services
 {
-    public class ImageService
+    public class ImageService : IImageService
     {
+        private readonly TypeCodeConfiguration _configuration;
         private readonly Image _baseImage = Image.FromFile("Ressources/Base.png");
+
+        public ImageService(TypeCodeConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
 
         public Image CreateImageFromWeather(WeatherForecast weather)
         {
@@ -46,15 +49,15 @@ namespace EPaper.Web.Core.Services
             using (Graphics grfx = Graphics.FromImage(_baseImage))
             {
                 grfx.DrawImage(DrawText($"{weatherInOneHour.DateTime:ddd HH:mm}", font, Color.Black, Color.White), 35, 30);
-                grfx.DrawImage(getImageFromWeatherIconId(weatherInOneHour.ImageUrl), 0, 50);
-                grfx.DrawImage(DrawText(weatherInOneHour.CurrTempAsString, font, Color.Black, Color.White), 60, 220);
-                grfx.DrawImage(DrawText(weather.Now.CurrTempAsString, small, Color.Black, Color.White), 30, 250);
-                grfx.DrawImage(DrawText(weather.InTwoHoursWeather.CurrTempAsString, small, Color.Black, Color.White), 100, 250);
+                grfx.DrawImage(GetImageFromWeatherIconUrl(weatherInOneHour.ImageUrl), 10, 50);
+                grfx.DrawImage(DrawText(weatherInOneHour.CurrTempAsString, font, Color.Black, Color.White), 60, 245);
+                grfx.DrawImage(DrawText(weather.Now.CurrTempAsString, small, Color.Black, Color.White), 30, 275);
+                grfx.DrawImage(DrawText(weather.InTwoHoursWeather.CurrTempAsString, small, Color.Black, Color.White), 100, 275);
 
                 grfx.DrawImage(DrawText($"{tomorrowsWeather.DateTime:ddd dd.MM}", font, Color.Black, Color.White), 250, 30);
-                grfx.DrawImage(getImageFromWeatherIconId(tomorrowsWeather.ImageUrl), 200, 50);
-                grfx.DrawImage(DrawText(tomorrowsWeather.MinTempAsString, font, Color.Black, Color.White), 250, 250);
-                grfx.DrawImage(DrawText(tomorrowsWeather.MaxTempAsString, font, Color.Black, Color.White), 290, 220);
+                grfx.DrawImage(GetImageFromWeatherIconUrl(tomorrowsWeather.ImageUrl), 210, 50);
+                grfx.DrawImage(DrawText(tomorrowsWeather.MinTempAsString, font, Color.Black, Color.White), 250, 275);
+                grfx.DrawImage(DrawText(tomorrowsWeather.MaxTempAsString, font, Color.Black, Color.White), 290, 245);
 
                 grfx.DrawImage(DrawText(nowInTimeZone.ToString("HH:mm"), small, Color.Black, Color.White), 350, 280);
 
@@ -62,11 +65,19 @@ namespace EPaper.Web.Core.Services
             return _baseImage;
         }
 
-        private Image getImageFromWeatherIconId(string iconUrl)
+        public Image GetImageFromWeatherIconUrl(string iconUrl, int width = 180, int height = 180)
         {
-            using var webClient = new WebClient();
-            using var ms = new MemoryStream(webClient.DownloadData(iconUrl));
-            return ReplaceWwithBColor(Image.FromStream(ms).ResizeImage(180, 180));
+            if (this._configuration.FromFileSystem)
+            {
+                return Image.FromFile(iconUrl).ResizeImage(width, height);
+            }
+            else
+            {
+                using var webClient = new WebClient();
+                using var ms = new MemoryStream(webClient.DownloadData(iconUrl));
+                return ReplaceWwithBColor(Image.FromStream(ms).ResizeImage(width, height));
+            }
+
         }
 
         private Image DrawText(String text, Font font, Color textColor, Color backColor)
