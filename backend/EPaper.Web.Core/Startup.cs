@@ -1,5 +1,3 @@
-using System;
-using EPaper.Web.Core.Models;
 using EPaper.Web.Core.Models.Configurations;
 using EPaper.Web.Core.Services;
 using Microsoft.AspNetCore.Builder;
@@ -7,10 +5,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace EPaper.Web.Core
 {
+    using Services.Desk;
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -37,10 +36,11 @@ namespace EPaper.Web.Core
             services.AddSingleton(typeCodeConfiguration);
             services.AddSingleton(imageConfiguration);
             services.AddScoped<IWeatherService, WeatherService>();
+            services.AddScoped<IScheduleService, ScheduleService>();
             services.AddScoped<IImageService, ImageService>();
-
-
-
+            services.AddScoped<IDeskService, DeskService>();
+            services.AddScoped<IMqttService, MqttService>();
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -56,8 +56,8 @@ namespace EPaper.Web.Core
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            
             app.UseCors(builder => builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
-
 
             app.UseAuthorization();
 
@@ -65,6 +65,9 @@ namespace EPaper.Web.Core
             {
                 endpoints.MapControllers();
             });
+            
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
     }
 }

@@ -1,18 +1,24 @@
 ﻿using EPaper.Web.Core.Models;
 using EPaper.Web.Core.Utility;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using EPaper.Web.Core.Models.Configurations;
+using EPaper.Web.Core.Models.Connections;
 
 namespace EPaper.Web.Core.Services
 {
+    using Models.Desk;
+
     public class ImageService : IImageService
     {
         private readonly TypeCodeConfiguration _configuration;
         private readonly Image _baseImage = Image.FromFile("Ressources/Base.png");
+        private readonly Image _baseImageWhite = Image.FromFile("Ressources/BaseWhite.png");
+        private readonly Image _baseImage200X200 = Image.FromFile("Ressources/Base200x200.png");
 
         public ImageService(TypeCodeConfiguration configuration)
         {
@@ -27,6 +33,7 @@ namespace EPaper.Web.Core.Services
                 18,
                 FontStyle.Regular,
                 GraphicsUnit.Pixel);
+
             var small = new Font(
                 fontFamily,
                 12,
@@ -41,6 +48,7 @@ namespace EPaper.Web.Core.Services
             {
                 nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZone.CurrentTimeZone.StandardName));
             }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 nowInTimeZone = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Europe/Zurich"));
@@ -62,7 +70,82 @@ namespace EPaper.Web.Core.Services
                 grfx.DrawImage(DrawText(nowInTimeZone.ToString("HH:mm"), small, Color.Black, Color.White), 350, 280);
 
             }
+
             return _baseImage;
+        }
+
+        public Image CreateImageFromDeskModel(DeskModel deskModel)
+        {
+            var fontFamily = new FontFamily("Arial");
+            var font = new Font(
+                fontFamily,
+                18,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel);
+
+            var large = new Font(
+                fontFamily,
+                24,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel);
+
+            var small = new Font(
+                fontFamily,
+                12,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel);
+
+            using (Graphics grfx = Graphics.FromImage(_baseImage200X200))
+            {
+                string timeAsString;
+                if (deskModel.IsCurrentlyOccupied)
+                {
+                    grfx.DrawImage(DrawText("Occupied until", large, Color.Black, Color.White), 10, 20);
+                    timeAsString = $"{deskModel.OccupiedUntil:ddd HH:mm}";
+                }
+                else
+                {
+                    grfx.DrawImage(DrawText("Free until", large, Color.Black, Color.White), 10, 20);
+                    timeAsString = $"{deskModel.FreeUntil:ddd HH:mm}";
+                }
+
+                grfx.DrawImage(DrawText(timeAsString, font, Color.Black, Color.White), 10, 50);
+            }
+
+            return _baseImage200X200;
+        }
+
+        public Image CreateImageFromConnections(IList<Connection> connections)
+        {
+            var fontFamily = new FontFamily("Arial");
+            var font = new Font(
+                fontFamily,
+                18,
+                FontStyle.Regular,
+                GraphicsUnit.Pixel);
+
+            var verticalSpace = 30;
+
+            using (Graphics grfx = Graphics.FromImage(_baseImageWhite))
+            {
+                grfx.DrawImage(DrawText($"From", font, Color.Black, Color.White), 0, 0);
+                grfx.DrawImage(DrawText($"To", font, Color.Black, Color.White), 140, 0);
+                grfx.DrawImage(DrawText($"Abfahrt", font, Color.Black, Color.White), 190, 0);
+                grfx.DrawImage(DrawText($"Platform", font, Color.Black, Color.White), 270, 0);
+                grfx.DrawImage(DrawText($"Delay", font, Color.Black, Color.White), 340, 0);
+
+                for (var i = 0; i < connections.Count; i++)
+                {
+                    var verticalPos = verticalSpace * (i + 1);
+                    grfx.DrawImage(DrawText($"{connections[i].from.station.name.Substring(0, 13)}", font, Color.Black, Color.White), 0, verticalPos);
+                    grfx.DrawImage(DrawText($"{connections[i].to.station.name.Substring(0, 4)}", font, Color.Black, Color.White), 140, verticalPos);
+                    grfx.DrawImage(DrawText($"{connections[i].from.departure:HH:mm}", font, Color.Black, Color.White), 190, verticalPos);
+                    grfx.DrawImage(DrawText($"{connections[i].from.platform}", font, Color.Black, Color.White), 270, verticalPos);
+                    grfx.DrawImage(DrawText($"{connections[i].from.delay ?? 0}", font, Color.Black, Color.White), 340, verticalPos);
+                }
+            }
+
+            return _baseImageWhite;
         }
 
         public Image GetImageFromWeatherIconUrl(string iconUrl, int width = 180, int height = 180)
@@ -71,13 +154,10 @@ namespace EPaper.Web.Core.Services
             {
                 return Image.FromFile(iconUrl).ResizeImage(width, height);
             }
-            else
-            {
-                using var webClient = new WebClient();
-                using var ms = new MemoryStream(webClient.DownloadData(iconUrl));
-                return ReplaceWwithBColor(Image.FromStream(ms).ResizeImage(width, height));
-            }
 
+            using var webClient = new WebClient();
+            using var ms = new MemoryStream(webClient.DownloadData(iconUrl));
+            return ReplaceWwithBColor(Image.FromStream(ms).ResizeImage(width, height));
         }
 
         private Image DrawText(String text, Font font, Color textColor, Color backColor)
